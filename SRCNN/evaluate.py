@@ -64,11 +64,15 @@ if __name__ == '__main__':
         img_y = Image.fromarray(img_y, mode='F')
 
         # Downsample to get low-res image.
-        lr_img_y = img_y.resize((width//2, height//2), Image.BICUBIC)
+        lr_img_y = img_y.resize(
+            (width//args.upscale_factor, height//args.upscale_factor),
+            Image.BICUBIC)
         width, height = lr_img_y.size
 
         # Achieve high-res using bicubic interpolation.
-        out_img_bicubic_y = lr_img_y.resize((width*2, height*2), Image.BICUBIC)
+        out_img_bicubic_y = lr_img_y.resize(
+            (width*args.upscale_factor, height*args.upscale_factor),
+            Image.BICUBIC)
 
         # Achive high-res using deep neural net.
         y = out_img_bicubic_y.copy()
@@ -78,7 +82,7 @@ if __name__ == '__main__':
         out_img_deep_y = Image.fromarray(out_img_deep_y, mode='F')
 
         bicubic_psnr = PSNR(array(out_img_bicubic_y), array(img_y),
-                            ignore_border=8)
+                            ignore_border=0)
         deep_psnr = PSNR(array(out_img_deep_y), array(img_y), ignore_border=8)
 
         avg_bicubic_psnr += bicubic_psnr

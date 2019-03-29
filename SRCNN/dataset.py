@@ -52,10 +52,12 @@ class SuperResDataset(Dataset):
         target = input.copy()
 
         # Downsample then upsample.
-        input = input.resize((input.size[0]//2, input.size[1]//2), 
-                             Image.BICUBIC)
-        input = input.resize((input.size[0]*2, input.size[1]*2),
-                             Image.BICUBIC)
+        input = input.resize(
+            (input.size[0]//self.upscale_factor, input.size[1]//self.upscale_factor), 
+            Image.BICUBIC)
+        input = input.resize(
+            (input.size[0]*self.upscale_factor, input.size[1]*self.upscale_factor),
+            Image.BICUBIC)
 
         input = ToTensor()(input)
         target = ToTensor()(target)

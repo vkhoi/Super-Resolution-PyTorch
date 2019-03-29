@@ -11,10 +11,12 @@ from utilities import rgb2ycrcb, ycbcr2rgb
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', type=str, required=True, 
-                        help='input image to super resolve')
     parser.add_argument('--model', type=str, required=True,
                         help='model file')
+    parser.add_argument('--upscale_factor', type=int, required=True,
+                        help='upscale factor')
+    parser.add_argument('--input', type=str, required=True, 
+                        help='input image to super resolve')
     parser.add_argument('--output', type=str, required=True,
                         help='where to save the output image')
     args = parser.parse_args()
@@ -27,7 +29,9 @@ if __name__ == '__main__':
     model = SRCNN()
     model.load_state_dict(ckpt['model'])
 
-    y = y.resize((y.size[0]*2, y.size[1]*2), Image.BICUBIC)
+    y = y.resize(
+        (y.size[0]*args.upscale_factor, y.size[1]*args.upscale_factor),
+        Image.BICUBIC)
     input = ToTensor()(y).view(1, -1, y.size[1], y.size[0])
 
     out = model(input)
