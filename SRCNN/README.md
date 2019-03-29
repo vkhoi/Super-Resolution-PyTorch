@@ -12,7 +12,7 @@ I found the network weight initialization scheme and optimizing using SGD as des
 ## Evaluation
 Performance of the network is evaluated using the conventional benchmark of this literature - PSNR metric. To ensure that we get the PSNR performance, it is advised [here](https://github.com/twtygqyy/pytorch-LapSRN) that we should use the MATLAB function (psnr, rgb2ycbcr, ycbcr2rgb, etc.) for evaluating. However, as this project is only for learning purpose and switching between Python and MATLAB is troublesome, I try to re-implement these functions (they are put in *utilities.py*).
 
-I also follow the paper to use the *Set5* for validation.
+I also follow the paper to use the *Set5* dataset for validation.
 
 ## Usage
 ### Training
@@ -21,8 +21,6 @@ usage: train.py [-h] --upscale_factor UPSCALE_FACTOR [--batch_size BATCH_SIZE]
                 [--n_epochs N_EPOCHS] [--checkpoints_dir CHECKPOINTS_DIR]
                 [--reload_from RELOAD_FROM] [--start_epoch START_EPOCH]
                 [--seed SEED] [--cuda]
-
-SRCNN training code
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -73,3 +71,8 @@ An example to super-resolve an image:
 ```
 $ python super-resolve.py --model checkpoints/ckpt80.pth --input inp.png --output out.png
 ```
+
+## References
+* ["Image Super-Resolution Using Deep Convolutional Networks" - Dong et al.](https://arxiv.org/pdf/1501.00092.pdf).
+* [PyTorch example of super-resolution DNN](https://github.com/pytorch/examples/tree/master/super_resolution).
+* [Dataset](http://vllab.ucmerced.edu/wlai24/LapSRN).
