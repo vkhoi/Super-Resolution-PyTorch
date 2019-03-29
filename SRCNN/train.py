@@ -87,7 +87,7 @@ if __name__ == '__main__':
                         help='super resolution upscale factor')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size for training')
-    parser.add_argument('--n_epochs', type=int, default=10,
+    parser.add_argument('--n_epochs', type=int, default=80,
                         help='number of epochs to train')
     parser.add_argument('--checkpoints_dir', type=str, default='checkpoints',
                         help='directory to save checkpoints')
