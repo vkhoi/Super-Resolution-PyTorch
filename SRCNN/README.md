@@ -75,14 +75,14 @@ $ python super-resolve.py --model checkpoints/ckpt80.pth --input inp.png --outpu
 ## Experimental results
 This result is achieved after training for 89 epochs with seed ...
 
-| DataSet       | x2 upscaling  | x4 upscaling      |
-| ------------- |:-------------:| -----------------:|
-| Set5          | 36.25         |                   |
-| Set14         | 32.23         |                   |
+| DataSet       | x2 upscaling (PSNR) | x4 upscaling (PSNR) |
+| ------------- |:-------------------:| -------------------:|
+| Set5          | 36.25               |                     |
+| Set14         | 32.23               |                     |
 
 The trained model that achieves these results is put in folder *trained_model*.
 
 ## References
-* ["Image Super-Resolution Using Deep Convolutional Networks" - Dong et al.](https://arxiv.org/pdf/1501.00092.pdf).
+* ["Image Super-Resolution Using Deep Convolutional Networks" - Dong et al.](https://arxiv.org/pdf/1501.00092.pdf)
 * [PyTorch example of super-resolution DNN](https://github.com/pytorch/examples/tree/master/super_resolution).
 * [Dataset](http://vllab.ucmerced.edu/wlai24/LapSRN).
