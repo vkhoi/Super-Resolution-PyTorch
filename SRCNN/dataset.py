@@ -16,7 +16,7 @@ def is_image_file(filename):
 
 
 class SuperResDataset(Dataset):
-    def __init__(self, image_dir, crop_size, upscale_factor, resampling=200,
+    def __init__(self, image_dir, upscale_factor, crop_size=-1, resampling=200,
                  transform=None):
         """
         The way the training data is sampled is as follows:
@@ -33,8 +33,8 @@ class SuperResDataset(Dataset):
 
         self.image_filenames = [join(image_dir, x) for x in listdir(image_dir) \
                                 if is_image_file(x)]
-        self.crop_size = crop_size
         self.upscale_factor = upscale_factor
+        self.crop_size = crop_size
         self.resampling = resampling
         self.len = len(self.image_filenames)
         self.transform = transform
@@ -47,6 +47,16 @@ class SuperResDataset(Dataset):
 
         # Only take the Y-channel.
         input, _, _ = input.split()
+        if self.crop_size != -1:
+            # For training.
+            input = RandomCrop(self.crop_size)(input)
+        else:
+            # For testing, we want to take the whole image.
+            width, height = input.size[:2]
+            width = width - (width % self.upscale_factor)
+            height = height - (height % self.upscale_factor)
+            input = CenterCrop((height, width))(input)
+
         if self.transform is not None:
             input = self.transform(input)
         target = input.copy()
