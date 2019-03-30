@@ -7,7 +7,7 @@ SRCNN is one of the first works that uses deep neural network to perform image s
 The network is trained on the *T91* dataset and validated on the *Set5* dataset. Link to download these datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN). This is the project page of LapSRN, another super-resolution DNN. After the datasets have been downloaded and extracted, please go to *data.py* to change the directory of the training and validation set.
 
 ## Training
-I found the network weight initialization scheme and optimizing using SGD as described in the paper is extremely slow and hard to optimize. Therefore, I use the default weight initialization of PyTorch and Adam optimizer for training, which is much faster and helps me successfully reproduce the paper reported results.
+I found the network weight initialization scheme and optimizing using SGD as described in the paper is slow and hard to optimize. Also, as I only want to quickly try out SRCNN, I use the default weight initialization of PyTorch and Adam optimizer for training, which is faster but does not produce results as good as those reported in the paper.
 
 ## Evaluation
 Performance of the network is evaluated using the conventional benchmark of this literature - PSNR metric. To ensure that we get the PSNR performance, it is advised [here](https://github.com/twtygqyy/pytorch-LapSRN) that we should use the MATLAB function (psnr, rgb2ycbcr, ycbcr2rgb, etc.) for evaluating. However, as this project is only for learning purpose and switching between Python and MATLAB is troublesome, I try to re-implement these functions (they are put in *utilities.py*).
@@ -74,14 +74,14 @@ $ python super-resolve.py --model checkpoints/ckpt80.pth --input inp.png --outpu
 
 ## Experimental results
 
-| DataSet       | x2 upscaling (PSNR) | x3 upscaling (PSNR) |
-| ------------- |:-------------------:| -------------------:|
-| Set5          | 36.24               | 32.22               |
-| Set14         | 32.23               | 28.93               |
+| DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
+| ------- |:-------------------:|:-------------------:|:--------------------:
+| Set5    | 36.24               | 32.22               | 29.98               |
+| Set14   | 32.23               | 28.93               | 27.20               |
 
 The trained model that achieves these results is put in folder *trained_model*.
 
 ## References
 * ["Image Super-Resolution Using Deep Convolutional Networks" - Dong et al.](https://arxiv.org/pdf/1501.00092.pdf)
-* [PyTorch example of super-resolution DNN](https://github.com/pytorch/examples/tree/master/super_resolution).
-* [Dataset](http://vllab.ucmerced.edu/wlai24/LapSRN).
+* [PyTorch example of super-resolution DNN](https://github.com/pytorch/examples/tree/master/super_resolution)
+* [Dataset fron LapSRN project](http://vllab.ucmerced.edu/wlai24/LapSRN)
