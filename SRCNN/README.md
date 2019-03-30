@@ -73,11 +73,11 @@ $ python super-resolve.py --model checkpoints/ckpt80.pth --input inp.png --outpu
 ```
 
 ## Experimental results
-This result is achieved after training for 89 epochs with seed ...
+This result is achieved after training for 116 epochs with seed 1742.
 
 | DataSet       | x2 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------------- |:-------------------:| -------------------:|
-| Set5          | 36.25               |                     |
+| Set5          | 36.24               |                     |
 | Set14         | 32.23               |                     |
 
 The trained model that achieves these results is put in folder *trained_model*.
