@@ -63,14 +63,8 @@ def ycbcr2rgb(ycbcr):
     else:
         is_image_type = False
 
-    if ycbcr.dtype == np.uint8:
-        T_scale = 255.
-        offset_scale = 255.
-    elif ycbcr.dtype == np.float32 or ycbcr.dtype == np.float64:
-        T_scale = 255.
-        offset_scale = 1.
-    else:
-        raise Exception('Invalid type in ycrcb2rgb')
+    if ycbcr.dtype != np.uint8:
+        raise Exception('input must be in np.uint8 type')
         
     A = np.linalg.inv(
             np.array([[65.481, 128.553, 24.966],

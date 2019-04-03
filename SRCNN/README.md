@@ -4,13 +4,15 @@ This is the implementation of SRCNN as described in ["Image Super-Resolution Usi
 SRCNN is one of the first works that uses deep neural network to perform image super-resolution. SRCNN is a pre-upsampling model, which means it first upsamples the low-resolution input image (for example, using bicubic interpolation) before forwarding it through the network to obtain high-resolution result. SRCNN's network architecture is very small with only around 8k parameters, yet it still outperforms bicubic upsampling.
 
 ## Data preparation
-The network is trained on the *T91* dataset and validated on the *Set5* dataset. Link to download these datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN). This is the project page of LapSRN, another super-resolution DNN. After the datasets have been downloaded and extracted, please go to *data.py* to change the directory of the training and validation set.
+The network is trained on the *T91* dataset and validated on the *Set5* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN). This is the project page of LapSRN, another super-resolution DNN. After the datasets have been downloaded and extracted, please go to *data.py* to change the directory of the training and validation set.
 
 ## Training
-I found the network weight initialization scheme and optimizing using SGD as described in the paper is slow and hard to optimize. Also, as I only want to quickly try out SRCNN, I use the default weight initialization of PyTorch and Adam optimizer for training, which is faster but does not produce results as good as those reported in the paper.
+I found the network weight initialization scheme and optimizing using SGD as described in the paper is slow and hard to optimize, although it leads to better result. Also, as I only want to quickly try out SRCNN, I use the default weight initialization of PyTorch and Adam optimizer for training. The learning rate starts at *1e-3* and divides by *2* everytime the training loss plateaus. Training stops when learning rate is less than *1e-5* or validation PSNR does not improve after 200 epochs.
+
+Compared with the authors' SRCNN trained on T91, my results are better.  Training SRCNN on Imagenet will be left as future work.
 
 ## Evaluation
-Performance of the network is evaluated using the conventional benchmark of this literature - PSNR metric. To ensure that we get the PSNR performance, it is advised [here](https://github.com/twtygqyy/pytorch-LapSRN) that we should use the MATLAB function (psnr, rgb2ycbcr, ycbcr2rgb, etc.) for evaluating. However, as this project is only for learning purpose and switching between Python and MATLAB is troublesome, I try to re-implement these functions (they are put in *utilities.py*).
+Performance of the network is evaluated using the conventional benchmark of this literature - PSNR metric. To ensure that we get the correct PSNR number, it is advised [here](https://github.com/twtygqyy/pytorch-LapSRN) that we should use the MATLAB function (psnr, rgb2ycbcr, ycbcr2rgb, etc.) for evaluating. However, as this project is only for learning purpose and switching between Python and MATLAB is troublesome, I try to re-implement these functions (they are put in *utilities.py*).
 
 I also follow the paper to use the *Set5* dataset for validation. As instructed by the [NTIRE2017 challenge](http://www.vision.ee.ethz.ch/~timofter/publications/Timofte-CVPRW-2017.pdf), a rim of *s+2*, where *s* is the upscaling factor, is ignored during computing PSNR.
 
@@ -18,7 +20,8 @@ I also follow the paper to use the *Set5* dataset for validation. As instructed 
 ### Training
 ```
 usage: train.py [-h] --upscale_factor UPSCALE_FACTOR [--batch_size BATCH_SIZE]
-                [--n_epochs N_EPOCHS] [--checkpoints_dir CHECKPOINTS_DIR]
+                [--use_new_lr USE_NEW_LR] [--n_epochs N_EPOCHS]
+                [--checkpoints_dir CHECKPOINTS_DIR]
                 [--reload_from RELOAD_FROM] [--start_epoch START_EPOCH]
                 [--seed SEED] [--cuda]
 
@@ -26,18 +29,19 @@ optional arguments:
   -h, --help            show this help message and exit
   --upscale_factor      super resolution upscale factor
   --batch_size          batch size for training
+  --use_new_lr          lr to use, otherwise use from config.py
   --n_epochs            number of epochs to train
   --checkpoints_dir     directory to save checkpoints
   --reload_from         directory to checkpoint to resume training from
   --start_epoch         epoch number to start from
-  --seed                random seed
+  --seed SEED           random seed
   --cuda                whether to use cuda
 ```
 An example of training:
 ```
-$ python train.py --upscale_factor 2 --batch_size 64 --n_epochs 80 --checkpoints_dir checkpoints --cuda
+$ python train.py --upscale_factor 2 --batch_size 64 --n_epochs 1000 --checkpoints_dir checkpoints --cuda
 ```
-Train a SRCNN network with upscaling factor 2, batchsize 6 for 80 epochs using CUDA. Checkpoint after each epoch is saved to *checkpoints* folder.
+Train a SRCNN network with upscaling factor 2, batchsize 6 for 1000 epochs using CUDA. Checkpoint after each epoch is saved to *checkpoints* folder. 
 
 ### Evaluate on an image set
 ```
@@ -53,31 +57,33 @@ optional arguments:
 ```
 An example of evaluating:
 ```
-$ python evaluate.py -image_dir Set5 --model checkpoints/ckpt80.pth --upscale_factor 2
+$ python evaluate.py --image_dir ../../datasets/super-resolution/Set5 --upscale_factor 3 --model trained_model/SRCNN_upscale_3.pth
 ```
-Evaluate the model checkpoint *ckpt80.pth* on the Set5 dataset with upscaling factor 2.
+Evaluate the trained model SRCNN_upscale_3.pth on the Set5 dataset with upscaling factor 3.
 
 ### Super-resolve an image
 ```
-usage: super_resolve.py [-h] --input INPUT --model MODEL --output OUTPUT
+usage: super_resolve.py [-h] --model MODEL --upscale_factor UPSCALE_FACTOR
+                        --input INPUT --output OUTPUT
 
 optional arguments:
-  -h, --help       show this help message and exit
-  --input INPUT    input image to super resolve
-  --model MODEL    model file
-  --output OUTPUT  where to save the output image
+  -h, --help            show this help message and exit
+  --model               model file
+  --upscale_factor      upscale factor
+  --input INPUT         input image to super resolve
+  --output OUTPUT       where to save the output image
 ```
 An example to super-resolve an image:
 ```
-$ python super-resolve.py --model checkpoints/ckpt80.pth --input inp.png --output out.png
+$ python super_resolve.py --model trained_model/SRCNN_upscale_2.pth --upscale_factor 2 --input inp.png --output out.png
 ```
 
 ## Experimental results
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:--------------------:
-| Set5    | 36.24               | 32.22               | 29.98               |
-| Set14   | 32.23               | 28.93               | 27.20               |
+| Set5    | 36.59               | 32.53               | 30.17               |
+| Set14   | 32.46               | 29.16               | 27.34               |
 
 The trained model that achieves these results is put in folder *trained_model*.
 
