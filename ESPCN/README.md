@@ -78,6 +78,7 @@ $ python super_resolve.py --model trained_model/ESPCN_upscale_2.pth --upscale_fa
 
 ## Experimental results
 * *T91* ESPCN
+
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:--------------------:
 | Set5    | 36.69               | 32.66               |                     |

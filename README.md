@@ -6,3 +6,4 @@ This is a just-for-fun project.
 ## Models
 The following models have been implemented:
 * Super-Resolution Convolutional Neural Network - SRCNN: [paper](https://arxiv.org/pdf/1501.00092.pdf).
+* Efficient Sub-Pixel Convolutional Neural Network - ESPCN: [paper](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Shi_Real-Time_Single_Image_CVPR_2016_paper.pdf).
