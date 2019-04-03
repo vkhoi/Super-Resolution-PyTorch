@@ -13,7 +13,7 @@ def input_transform():
 
 
 def get_training_set(upscale_factor):
-    crop_size = config['crop_size'] - (config['crop_size'] % upscale_factor)
+    crop_size = config['lr_crop_size'] * upscale_factor
 
     return SuperResDataset(image_dir=config['TRAIN_DIR'],
                            upscale_factor=upscale_factor,

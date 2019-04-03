@@ -1,6 +1,6 @@
 config = {
     'base_lr': 1e-3,
-    'crop_size': 32,
+    'lr_crop_size': 17,
 
     'TRAIN_DIR': '../../datasets/super-resolution/T91',
     'train_resampling': 256,

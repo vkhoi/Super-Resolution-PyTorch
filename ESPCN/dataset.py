@@ -18,15 +18,15 @@ def is_image_file(filename):
 
 
 class SuperResDataset(Dataset):
-    def __init__(self, image_dir, upscale_factor, crop_size=-1, resampling=128,
+    def __init__(self, image_dir, upscale_factor, crop_size=-1, resampling=256,
                  transform=None, read_into_memory=True):
         """
         The way the training data is sampled is as follows:
-        - A batch of images are sampled.
+        - A batch of images are sampled from T91 dataset.
         - For each image, a random sub-image is cropped.
         - The sub-image is downsampled and upsampled so as to create training
         pairs.
-        As we want to force one epoch to have around 128 sub-images per image,
+        As we want to force one epoch to have around 200 sub-images per image,
         we will sample each image multiple times (that's why a resampling
         argument is passed into this constructor).
 
@@ -40,13 +40,8 @@ class SuperResDataset(Dataset):
         super(SuperResDataset, self).__init__()
 
         # Get filenames.
-        image_filenames = [join(image_dir, x) for x in listdir(image_dir) \
+        self.image_filenames = [join(image_dir, x) for x in listdir(image_dir) \
                                 if is_image_file(x)]
-        # if len(image_filenames) > 10000:
-        #     image_filenames = np.random.choice(np.array(image_filenames),
-        #                                        size=10000, replace=False)
-        self.image_filenames = image_filenames
-
         # Read all images.
         self.read_into_memory = read_into_memory
         if read_into_memory:
@@ -99,12 +94,9 @@ class SuperResDataset(Dataset):
         # Make a copy of it when it's still at high-res.
         target = input.copy()
 
-        # Downsample then upsample to create image at low-res.
+        # Downsample to create image at low-res.
         input = input.resize(
             (input.size[0]//self.upscale_factor, input.size[1]//self.upscale_factor), 
-            Image.BICUBIC)
-        input = input.resize(
-            (input.size[0]*self.upscale_factor, input.size[1]*self.upscale_factor),
             Image.BICUBIC)
 
         input = ToTensor()(input)

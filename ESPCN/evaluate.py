@@ -7,7 +7,7 @@ from numpy import array
 from torchvision.transforms import ToTensor
 from PIL import Image
 
-from model import SRCNN
+from model import ESPCN
 from utilities import rgb2ycrcb, ycbcr2rgb, PSNR
 
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
                        if is_image_file(x)]
     image_filenames = sorted(image_filenames)
 
-    model = SRCNN().to(device)
+    model = ESPCN(upscale_factor=args.upscale_factor).to(device)
     if args.cuda:
         ckpt = torch.load(args.model)
     else:
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             Image.BICUBIC)
 
         # Achive high-res using deep neural net.
-        y = out_img_bicubic_y.copy()
+        y = lr_img_y.copy()
         y = ToTensor()(y).view(1, -1, y.size[1], y.size[0])
         out_img_deep_y = model(y)[0].detach().numpy().squeeze()
         out_img_deep_y = out_img_deep_y.clip(0, 1)

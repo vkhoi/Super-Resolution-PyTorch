@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from config import config
 from data import get_training_set, get_val_set
-from model import SRCNN
+from model import ESPCN
 
 
 def train(epoch, train_dataloader, device, model, optimizer, critetion):
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
     print('===> Building model')
     sys.stdout.flush()
-    model = SRCNN().to(device)
+    model = ESPCN(upscale_factor=args.upscale_factor).to(device)
     criterion = nn.MSELoss()
     optimizer = setup_optimizer(model, base_lr=base_lr)
     history = {
