@@ -71,12 +71,6 @@ if __name__ == '__main__':
         lr_img_y = img_y.resize(
             (width//args.upscale_factor, height//args.upscale_factor),
             Image.BICUBIC)
-        width, height = lr_img_y.size
-
-        # Achieve high-res using bicubic interpolation.
-        out_img_bicubic_y = lr_img_y.resize(
-            (width*args.upscale_factor, height*args.upscale_factor),
-            Image.BICUBIC)
 
         # Achive high-res using deep neural net.
         y = out_img_bicubic_y.copy()
