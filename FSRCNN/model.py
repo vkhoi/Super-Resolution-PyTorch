@@ -33,8 +33,9 @@ class FSRCNN(nn.Module):
         self.expand = nn.Sequential(
             nn.Conv2d(12, 56, kernel_size=1),
             nn.PReLU())
-        self.deconv = nn.ConvTranspose2d(56, img_channels, kernel_size=9, 
-                                         padding=4, stride=2, output_padding=1)
+        self.deconv = nn.ConvTranspose2d(
+            56, img_channels, kernel_size=9, padding=4, stride=upscale_factor,
+            output_padding=upscale_factor-1)
 
     def forward(self, x):
         x = self.extraction(x)

@@ -5,5 +5,15 @@ This is a just-for-fun project.
 
 ## Models
 The following models have been implemented:
-* Super-Resolution Convolutional Neural Network - SRCNN: [paper](https://arxiv.org/pdf/1501.00092.pdf).
-* Efficient Sub-Pixel Convolutional Neural Network - ESPCN: [paper](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Shi_Real-Time_Single_Image_CVPR_2016_paper.pdf).
+* SRCNN - Super-Resolution Convolutional Neural Network: [paper](https://arxiv.org/pdf/1501.00092.pdf).
+* ESPCN - Efficient Sub-Pixel Convolutional Neural Network: [paper](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Shi_Real-Time_Single_Image_CVPR_2016_paper.pdf).
+* FSRCNN - Accelerating the Super-Resolution Convolutional Neural Network: [paper](https://arxiv.org/pdf/1608.00367.pdf).
+
+## Performance
+
+Performance of my implementations.
+
+**PSNR**
+| Algorithm | Scale | Set5 | Set14 | BSD100 |
+| --------- |:-----:|:----:|:-----:|:------:|
+| SRCNN<br>ESPCN<br>FSRCNN | 2x | x<br>x<br>37.04 | x<br>x<br>32.57 | x<br>x<br>31.53 |

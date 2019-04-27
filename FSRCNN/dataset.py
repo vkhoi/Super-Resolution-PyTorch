@@ -51,7 +51,10 @@ class SuperResDataset(Dataset):
 
         if self.crop_size != -1:
             # For training, take random crop.
-            input = RandomCrop(self.crop_size)(input)
+            if input.size[0] < self.crop_size or input.size[1] < self.crop_size:
+                input = input.resize((self.crop_size, self.crop_size), Image.BICUBIC)
+            else:
+                input = RandomCrop(self.crop_size)(input)
         else:
             # For testing, we want to take the whole image.
             width, height = input.size[:2]

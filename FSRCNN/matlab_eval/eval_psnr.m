@@ -1,4 +1,4 @@
-IMAGE_DIR = '../../../datasets/super-resolution/BSD200';
+IMAGE_DIR = '../../../datasets/super-resolution/BSD100';
 RESULT = '../result.mat';
 upscale_factor = 2;
 
