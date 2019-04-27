@@ -65,8 +65,9 @@ $ python super_resolve.py --model trained_models/fsrcnn_ychannel_t91_general100_
 
 ## Experimental results
 Training scripts for these models are located in _configs/_ folder.
+
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
-| ------- |:-------------------:|:-------------------:|:--------------------:
+| ------- |:-------------------:|:-------------------:|:-------------------:|
 | Set5    | 37.04               |                     |                     |
 | Set14   | 32.57               |                     |                     |
 | BSD200  | 32.24               |                     |                     |
