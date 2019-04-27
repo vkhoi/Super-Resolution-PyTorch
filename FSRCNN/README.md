@@ -70,7 +70,7 @@ Training scripts for these models are located in _configs/_ folder.
 | ------- |:-------------------:|:-------------------:|:-------------------:|
 | Set5    | 37.04               |                     |                     |
 | Set14   | 32.57               |                     |                     |
-| BSD200  | 32.24               |                     |                     |
+| BSD100  | 31.53               |                     |                     |
 
 The trained models that achieve these results are put in folder *trained_models*.
 
