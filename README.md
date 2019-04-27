@@ -14,6 +14,7 @@ The following models have been implemented:
 Performance of my implementations.
 
 **PSNR**
+
 | Algorithm | Scale | Set5 | Set14 | BSD100 |
 | --------- |:-----:|:----:|:-----:|:------:|
 | SRCNN<br>ESPCN<br>FSRCNN | 2x | x<br>x<br>37.04 | x<br>x<br>32.57 | x<br>x<br>31.53 |
