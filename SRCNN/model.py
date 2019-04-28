@@ -12,6 +12,7 @@ class SRCNN(nn.Module):
         self.conv2 = nn.Conv2d(64, 32, kernel_size=1)
         self.conv3 = nn.Conv2d(32, 1, kernel_size=5, padding=2)
 
+
     def forward(self, x):
         x = self.relu(self.conv1(x))
         x = self.relu(self.conv2(x))

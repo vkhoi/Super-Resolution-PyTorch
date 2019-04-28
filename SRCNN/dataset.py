@@ -1,16 +1,14 @@
 import numpy as np
 
-from numpy import array
-from scipy.ndimage import gaussian_filter
 from os import listdir
 from os.path import join
-from torch.utils.data import Dataset
-from torchvision.transforms import Compose, ToTensor, RandomCrop, Resize, \
-                                   CenterCrop, RandomHorizontalFlip
-from PIL import Image
 
-from config import config
-from utilities import rgb2ycrcb
+from PIL import Image
+from numpy import array
+from torch.utils.data import Dataset
+from torchvision.transforms import Compose, ToTensor, RandomCrop, CenterCrop
+
+from utilities import _rgb2ycbcr
 
 
 def is_image_file(filename):
@@ -18,73 +16,42 @@ def is_image_file(filename):
 
 
 class SuperResDataset(Dataset):
-    def __init__(self, image_dir, upscale_factor, crop_size=-1, resampling=128,
-                 transform=None, read_into_memory=True):
-        """
-        The way the training data is sampled is as follows:
-        - A batch of images are sampled.
-        - For each image, a random sub-image is cropped.
-        - The sub-image is downsampled and upsampled so as to create training
-        pairs.
-        As we want to force one epoch to have around 128 sub-images per image,
-        we will sample each image multiple times (that's why a resampling
-        argument is passed into this constructor).
-
-        Inputs:
-        - image_dir: directory to image set.
-        - upscale_factor.
-        - crop_size: -1 if take whole image size (for testing).
-        - resampling: how many sub-images we want to sample per image.
-        - transform: any custom transform we want to apply on the sampled image.
-        """
+    def __init__(self, image_dir, upscale_factor, crop_size=-1,
+                 augmentations=None, resampling=64):
         super(SuperResDataset, self).__init__()
 
-        # Get filenames.
-        image_filenames = [join(image_dir, x) for x in listdir(image_dir) \
+        # Get image filenames.
+        self.image_filenames = [join(image_dir, x) for x in listdir(image_dir) \
                                 if is_image_file(x)]
-        # if len(image_filenames) > 10000:
-        #     image_filenames = np.random.choice(np.array(image_filenames),
-        #                                        size=10000, replace=False)
-        self.image_filenames = image_filenames
-
         # Read all images.
-        self.read_into_memory = read_into_memory
-        if read_into_memory:
-            self.images = []
-            for image_filename in self.image_filenames:
-                image = Image.open(image_filename).convert('RGB')
-                if image.size[0] < crop_size or image.size[1] < crop_size:
-                    continue
-                image = rgb2ycrcb(image)
-                image, _, _ = image.split()
-                self.images.append(image)
-            self.len = len(self.images)
-        else:
-            self.len = len(self.image_filenames)
+        self.images = []
+        for image_filename in self.image_filenames:
+            image = Image.open(image_filename).convert('RGB')
+            if image.size[0] < crop_size or image.size[1] < crop_size:
+                continue
+            image = _rgb2ycbcr(image)
+            image, _, _ = image.split()
+            self.images.append(image)
+
+        self.len = len(self.images)
 
         self.upscale_factor = upscale_factor
         self.crop_size = crop_size
+        self.augmentations = augmentations
         self.resampling = resampling
-        self.transform = transform
 
     def __getitem__(self, index):
-        if self.read_into_memory:
-            input = self.images[index % self.len]
-        else:
-            image_filename = self.image_filenames[index % self.len]
-            image = Image.open(image_filename).convert('RGB')
-            image = rgb2ycrcb(image).split()[0]
-            if image.size[0] < self.crop_size or image.size[1] < self.crop_size:
-                pad_image = Image.new(
-                    'L', (max(image.size[0], self.crop_size), max(image.size[1], self.crop_size)), 0)
-                pad_image.paste(image, image.getbbox())
-                input = pad_image
-            else:
-                input = image
+        input = self.images[index % self.len]
+
+        if self.augmentations is not None:
+            input = self.augmentations(input)
 
         if self.crop_size != -1:
             # For training, take random crop.
-            input = RandomCrop(self.crop_size)(input)
+            if input.size[0] < self.crop_size or input.size[1] < self.crop_size:
+                input = input.resize((self.crop_size, self.crop_size), Image.BICUBIC)
+            else:
+                input = RandomCrop(self.crop_size)(input)
         else:
             # For testing, we want to take the whole image.
             width, height = input.size[:2]
@@ -92,20 +59,16 @@ class SuperResDataset(Dataset):
             height = height - (height % self.upscale_factor)
             input = CenterCrop((height, width))(input)
 
-        # Apply custom transform.
-        if self.transform is not None:
-            input = self.transform(input)
-
-        # Make a copy of it when it's still at high-res.
+        # Make a high-resolution copy.
         target = input.copy()
 
-        # Downsample then upsample to create image at low-res.
+        # Downsample to create image at low-res.
+        # We already make sure that crop_size divides upscale_factor.
         input = input.resize(
             (input.size[0]//self.upscale_factor, input.size[1]//self.upscale_factor), 
             Image.BICUBIC)
-        input = input.resize(
-            (input.size[0]*self.upscale_factor, input.size[1]*self.upscale_factor),
-            Image.BICUBIC)
+        # Upsample using bicubic interpolation.
+        input = input.resize(target.size, Image.BICUBIC)
 
         input = ToTensor()(input)
         target = ToTensor()(target)

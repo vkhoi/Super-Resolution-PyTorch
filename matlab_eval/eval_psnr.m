@@ -1,14 +1,14 @@
-IMAGE_DIR = '../../../datasets/super-resolution/Set14';
-SRCNN_RES = '../result.mat';
+IMAGE_DIR = '../../datasets/super-resolution/BSD100';
+SR_RES = '../SRCNN/result.mat';
 upscale_factor = 2;
 
 
 image_filenames = dir(IMAGE_DIR);
 
-im_srcnn_res = load(SRCNN_RES);
+im_sr_res = load(SR_RES);
 
 avg_psnr_bic = 0;
-avg_psnr_srcnn = 0;
+avg_psnr_sr = 0;
 cnt = 0
 
 for i = 1:length(image_filenames)
@@ -37,28 +37,28 @@ for i = 1:length(image_filenames)
     im_bicubic = imresize(im_lr, upscale_factor, 'bicubic');
     
     % srcnn
-    im_srcnn = getfield(im_srcnn_res, f);
+    im_sr = getfield(im_sr_res, strcat('a', f));
     
     % remove border
-    im_srcnn = shave(uint8(im_srcnn * 255), [upscale_factor, upscale_factor]);
+    im_sr = shave(uint8(im_sr * 255), [upscale_factor, upscale_factor]);
     im = shave(uint8(im * 255), [upscale_factor, upscale_factor]);
     im_bicubic = shave(uint8(im_bicubic * 255), [upscale_factor, upscale_factor]);
     
     % compute PSNR
     psnr_bic = compute_psnr(im, im_bicubic);
-    psnr_srcnn = compute_psnr(im, im_srcnn);
+    psnr_sr = compute_psnr(im, im_sr);
     avg_psnr_bic = avg_psnr_bic + psnr_bic;
-    avg_psnr_srcnn = avg_psnr_srcnn + psnr_srcnn;
+    avg_psnr_sr = avg_psnr_sr + psnr_sr;
     
     fprintf('bicubic psnr: %.4f\n', psnr_bic);
-    fprintf('SRCNN psnr: %.4f\n', psnr_srcnn);
+    fprintf('SRCNN psnr: %.4f\n', psnr_sr);
     fprintf('\n');
 end
 
 avg_psnr_bic = avg_psnr_bic / cnt;
-avg_psnr_srcnn = avg_psnr_srcnn / cnt;
+avg_psnr_sr = avg_psnr_sr / cnt;
 
 fprintf('Average bicubic PSNR: %.4f\n', avg_psnr_bic);
-fprintf('Average SRCNN PSNR: %.4f\n', avg_psnr_srcnn);
+fprintf('Average SR PSNR: %.4f\n', avg_psnr_sr);
 
 

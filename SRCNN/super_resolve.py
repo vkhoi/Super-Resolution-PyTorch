@@ -6,7 +6,7 @@ from PIL import Image
 from torchvision.transforms import ToTensor
 
 from model import SRCNN
-from utilities import rgb2ycrcb, ycbcr2rgb
+from utilities import _rgb2ycbcr, _ycbcr2rgb
 
 
 if __name__ == '__main__':
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     img = Image.open(args.input).convert('RGB')
-    img = rgb2ycrcb(img)
+    img = _rgb2ycbcr(img)
     y, cb, cr = img.split()
 
     ckpt = torch.load(args.model, map_location='cpu')
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     out_img_cb = cb.resize(out_img_y.size, Image.BICUBIC)
     out_img_cr = cr.resize(out_img_y.size, Image.BICUBIC)
     out_img = Image.merge('YCbCr', [out_img_y, out_img_cb, out_img_cr])
-    out_img = ycbcr2rgb(out_img)
+    out_img = _ycbcr2rgb(out_img)
 
     out_img.save(args.output)
     print('output image saved to', args.output)
