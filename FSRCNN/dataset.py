@@ -6,8 +6,7 @@ from os.path import join
 from PIL import Image
 from numpy import array
 from torch.utils.data import Dataset
-from torchvision.transforms import Compose, ToTensor, RandomCrop, Resize, \
-                                   CenterCrop, RandomHorizontalFlip
+from torchvision.transforms import Compose, ToTensor, RandomCrop, CenterCrop
 
 from utilities import _rgb2ycbcr
 

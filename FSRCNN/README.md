@@ -39,11 +39,11 @@ optional arguments:
 ```
 Example:
 ```
-$ python inference_save_to_mat.py --img_dir ../../datasets/super-resolution/Set5 --model trained_models/fsrcnn_ychannel_t91_general100_adam.pth --upscale_factor 2 --img_channels 1 --output result.mat
+$ python inference_save_to_mat.py --img_dir ../../datasets/super-resolution/Set5 --model trained_models/fsrcnn_Y_scale2_t91_general100_adam.pth --upscale_factor 2 --img_channels 1 --output result.mat
 ```
 Super-resolve all images in Set5 dataset using our trained model with x2 scale and receives luminance  channel as input.
 
-Then, go to folder *matlab_eval* and modify *eval_psnr.m* so that it has the correct directories to the image set and the *.mat file results. Finally, run *eval_psnr.m* to get the PSNR.
+Then, go to folder *../matlab_eval* and modify *eval_psnr.m* so that it has the correct directories to the image set and the *.mat file results. Finally, run *eval_psnr.m* to get the PSNR.
 
 ### Super-resolve an image
 ```
@@ -60,7 +60,7 @@ optional arguments:
 ```
 An example to super-resolve an image:
 ```
-$ python super_resolve.py --model trained_models/fsrcnn_ychannel_t91_general100_adam.pth --upscale_factor 2 --img_channels 1 --input inp.png --output out.png
+$ python super_resolve.py --model trained_models/fsrcnn_Y_scale2_t91_general100_adam.pth --upscale_factor 2 --img_channels 1 --input inp.png --output out.png
 ```
 
 ## Experimental results
@@ -68,9 +68,9 @@ Training scripts for these models are located in _configs/_ folder.
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
-| Set5    | 37.04               |                     |                     |
-| Set14   | 32.57               |                     |                     |
-| BSD100  | 31.53               |                     |                     |
+| Set5    | 37.04               | 33.15               | 30.86               |
+| Set14   | 32.57               | 29.39               | 27.66               |
+| BSD100  | 31.53               | 28.52               | 27.02               |
 
 The trained models that achieve these results are put in folder *trained_models*.
 

@@ -58,7 +58,7 @@ optional arguments:
 ```
 An example to super-resolve an image:
 ```
-$ python super_resolve.py --model trained_model/srcnn_Y_scale2_t91_general100_adam.pth --upscale_factor 2 --input inp.png --output out.png
+$ python super_resolve.py --model trained_models/srcnn_Y_scale2_t91_general100_adam.pth --upscale_factor 2 --input inp.png --output out.png
 ```
 
 ## Experimental results
