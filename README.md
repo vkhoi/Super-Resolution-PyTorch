@@ -17,6 +17,6 @@ Performance of my implementations.
 
 | Algorithm | Scale | Set5 | Set14 | BSD100 |
 | --------- |:-----:|:----:|:-----:|:------:|
-| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.46<br>x<br>37.04 | 32.18<br>x<br>32.57 | 31.21<br>x<br>31.53 |
-| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.42<br>x<br>33.15 | 28.95<br>x<br>29.39 | x<br>x<br>28.52 |
-| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.14<br>x<br>30.86 | 27.17<br>x<br>27.66 | x<br>x<br>27.02 |
+| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.47<br>x<br>37.04 | 32.19<br>x<br>32.57 | 31.21<br>x<br>31.53 |
+| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.54<br>x<br>33.15 | 29.06<br>x<br>29.39 | 28.28<br>x<br>28.52 |
+| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.27<br>x<br>30.86 | 27.29<br>x<br>27.66 | 26.78<br>x<br>27.02 |
