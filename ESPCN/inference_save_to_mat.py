@@ -9,7 +9,7 @@ from torchvision.transforms import ToTensor
 from PIL import Image
 
 from model import ESPCN
-from utilities import rgb2ycrcb, ycbcr2rgb, PSNR
+from utilities import _rgb2ycbcr
 
 
 def is_image_file(filename):
@@ -18,12 +18,14 @@ def is_image_file(filename):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_dir', type=str, required=True, 
-                        help='directory to image set for evaluating PSNR')
+    parser.add_argument('--img_dir', type=str, required=True, 
+                        help='directory to image set')
     parser.add_argument('--model', type=str, required=True,
                         help='model file')
     parser.add_argument('--upscale_factor', type=int, required=True,
                         help='upscale factor')
+    parser.add_argument('--img_channels', type=int, required=True,
+                        help='# of image channels (1 for Y, 3 for RGB)')
     parser.add_argument('--output', type=str, required=True,
                         help='output *.mat file')
     parser.add_argument('--cuda', action='store_true',
@@ -35,20 +37,18 @@ if __name__ == '__main__':
     device = torch.device('cuda' if args.cuda else 'cpu')
     print('Use device:', device)
 
-    filenames = os.listdir(args.image_dir)
-    image_filenames = [os.path.join(args.image_dir, x) for x in filenames \
+    filenames = os.listdir(args.img_dir)
+    image_filenames = [os.path.join(args.img_dir, x) for x in filenames \
                        if is_image_file(x)]
     image_filenames = sorted(image_filenames)
 
-    model = ESPCN(upscale_factor=args.upscale_factor).to(device)
+    model = ESPCN(img_channels=args.img_channels,
+                  upscale_factor=args.upscale_factor).to(device)
     if args.cuda:
         ckpt = torch.load(args.model)
     else:
         ckpt = torch.load(args.model, map_location='cpu')
     model.load_state_dict(ckpt['model'])
-
-    # avg_bicubic_psnr = 0
-    # avg_deep_psnr = 0
 
     res = {}
 
@@ -63,45 +63,43 @@ if __name__ == '__main__':
         width -= pad_width
         height -= pad_height
         img = img.crop((0, 0, width, height))
-        img = rgb2ycrcb(img)
-        img_y = array(img.split()[0], dtype=np.float32) / 255.0
-        img_y = Image.fromarray(img_y, mode='F')
+
+        if args.img_channels == 1:
+            img = _rgb2ycbcr(img)
+            img_y = array(img.split()[0], dtype=np.float32) / 255.0
+            img_y = Image.fromarray(img_y, mode='F')
 
         # Downsample to get low-res image.
-        lr_img_y = img_y.resize(
+        lr_img = img_y.resize(
             (width//args.upscale_factor, height//args.upscale_factor),
             Image.BICUBIC)
 
-        # Achive high-res using deep neural net.
-        y = lr_img_y.copy()
+        # Achieve high-res using FSRCNN.
+        y = lr_img.copy()
         y = ToTensor()(y).view(1, -1, y.size[1], y.size[0])
         out_img_deep_y = model(y)[0].detach().numpy().squeeze()
         out_img_deep_y = out_img_deep_y.clip(0, 1)
 
+        if args.img_channels == 3:
+            # Must convert to luminance so that it can be evaluated by the
+            # MATLAB code.
+            out_img_deep_y = (out_img_deep_y * 255).astype(np.uint8)
+            out_img_deep_y = _rgb2ycbcr(out_img_deep_y)
+
+            # MATLAB code expects output as float, so we convert it again.
+            out_img_deep_y = out_img_deep_y.astype(np.float32) / 255.
+
+        # Get image filename.
         f = f.split('/')
         f = f[len(f) - 1]
         f = f.split('.')
-        f = f[0]
+
+        # Because MATLAB does not accept fieldname of struct to contain only
+        # numbers, and there might be chance where the image name contains only
+        # numbers, so we prepend a character to it.
+        f = 'a' + f[0]
+        # Save result to dict.
         res[f] = out_img_deep_y
 
-        # out_img_deep_y = Image.fromarray(out_img_deep_y, mode='F')
-
-        # bicubic_psnr = PSNR(array(out_img_bicubic_y), array(img_y),
-        #                     ignore_border=4)
-        # deep_psnr = PSNR(array(out_img_deep_y), array(img_y), ignore_border=8)
-
-        # avg_bicubic_psnr += bicubic_psnr
-        # avg_deep_psnr += deep_psnr
-
-        # print(f)
-        # print('PSNR-Bicubic: {:.4f}'.format(bicubic_psnr))
-        # print('PSNR-SRCNN: {:.4f}'.format(deep_psnr))
-        # print('')
-
-    # avg_bicubic_psnr /= len(image_filenames)
-    # avg_deep_psnr /= len(image_filenames)
-
-    # print('Average PSNR-Bicubic: {:.4f}'.format(avg_bicubic_psnr))
-    # print('Average PSNR-SRCNN: {:.4f}'.format(avg_deep_psnr))
-
+    # Save mat file.
     savemat(args.output, res)

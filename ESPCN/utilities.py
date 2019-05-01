@@ -1,10 +1,10 @@
 import numpy as np
 
-from math import log10
 from PIL import Image
+from math import log10
 
 
-def rgb2ycrcb(rgb):
+def _rgb2ycbcr(rgb):
     """
     Convert from RGB to YCbCr using ITU-R BT.601 conversion scheme.
     Wiki: https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion.
@@ -44,7 +44,7 @@ def rgb2ycrcb(rgb):
     return res
 
 
-def ycbcr2rgb(ycbcr):
+def _ycbcr2rgb(ycbcr):
     """
     Convert from YCbCr to RGB using ITU-R BT.601 conversion scheme.
     Wiki: https://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion.
@@ -83,30 +83,28 @@ def ycbcr2rgb(ycbcr):
     return res
 
 
-def PSNR(pred, gt, ignore_border=0):
+def compute_psnr(pred, gt, ignore_border=0):
+    """Input must be np.uint8 array or RGB PIL Image.
     """
-    Compute PSNR between 2 arrays pred and gt. We will ignore the region within
-    <ignore_border> pixels close to the border. The reason for ignoring this is
-    that the evaluation benchmark of Super-Resolution models ignores a rim of
-    6 + s pixels where is is the upscaling factor (according to NTIRE2017
-    challenge).
-    """
-    if pred.dtype == np.uint8:
-        peak_val = 255.
-    else:
-        peak_val = 1.
+    pred = pred.squeeze()
+    gt = gt.squeeze()
 
-    y = pred.astype(np.float64)
-    y_ref = gt.astype(np.float64)
-    
+    if pred.ndim == 3:
+        pred = np.uint8(_rgb2ycbcr(pred))[:,:,0]
+    if gt.ndim == 3:
+        gt = np.uint8(_rgb2ycbcr(gt))[:,:,0]
+
     if ignore_border > 0:
         pad = ignore_border // 2
-        width, height = y.shape[1], y.shape[0]
-        y = y[pad:height-pad,pad:width-pad]
-        y_ref = y_ref[pad:height-pad,pad:width-pad]
+        width, height = gt.shape[1], gt.shape[0]
+        pred = pred[pad:height-pad,pad:width-pad]
+        gt = gt[pad:height-pad,pad:width-pad]
+
+    pred = pred.astype(np.float64)
+    gt = gt.astype(np.float64)
     
-    diff = (y - y_ref)**2
+    diff = (pred - gt)**2
     mse = np.mean(diff)
-    psnr = 10 * log10(peak_val**2 / mse)
+    psnr = 10 * log10((255.0**2) / mse)
     
     return psnr

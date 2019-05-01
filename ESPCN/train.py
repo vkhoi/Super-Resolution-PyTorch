@@ -6,216 +6,207 @@ import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision.utils
+import yaml
 
 from math import log10
+from tensorboardX import SummaryWriter
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 
-from config import config
 from data import get_training_set, get_val_set
+from metrics import AverageMeter
 from model import ESPCN
+from utilities import compute_psnr
 
 
-def train(epoch, train_dataloader, device, model, optimizer, critetion):
-    epoch_loss = 0
-    epoch_psnr = 0
-    n_iterations = len(train_dataloader)
-
-    for i, batch in enumerate(train_dataloader):
-        input, target = batch[0].to(device), batch[1].to(device)
-
-        output = model(input)
-        optimizer.zero_grad()
-        
-        loss = criterion(output, target)
-        epoch_loss += loss.item()
-        
-        psnr = 10 * log10(1 / loss.item())
-        epoch_psnr += psnr
-
-        loss.backward()
-        optimizer.step()
-
-        if (i + 1) % 150 == 0:
-            print('Epoch[{}]({}/{}): Loss: {:.8f}, PSNR: {:.4f}'.format(
-                  epoch, i, len(train_dataloader), loss.item(), psnr))
-            sys.stdout.flush()
-
-    epoch_loss /= n_iterations
-    epoch_psnr /= n_iterations
-
-    print('===> Epoch {} complete: Avg. Loss: {:.8f}, Avg. PSNR: {:.4f}'.format(
-          epoch, epoch_loss, epoch_psnr))
-    sys.stdout.flush()
-
-    return epoch_loss, epoch_psnr
-
-
-def test(val_dataloader, model, criterion):
-    avg_psnr = 0
+def validate(i, val_dataloader, model, criterion, val_loss_meter,
+             val_psnr_meter, writer, config):
+    """Assume batch size when doing validation is 1. 
+    """
+    model.eval()
 
     with torch.no_grad():
-        for batch in val_dataloader:
+        for j, batch in enumerate(val_dataloader):
             input, target = batch[0].to(device), batch[1].to(device)
 
-            prediction = model(input)
-            mse = criterion(prediction, target)
-            psnr = 10 * log10(1 / mse.item())
-            avg_psnr += psnr
-    avg_psnr /= len(val_dataloader)
+            output = model(input)
+            loss = criterion(output, target)
+            val_loss_meter.update(loss)
 
-    print('===> Avg. PSNR on test set: {:.4f} dB'.format(avg_psnr))
-    sys.stdout.flush()
-
-    return avg_psnr
-
-
-def checkpoint(checkpoints_dir, epoch, model, optimizer, history):
-    ckpt = {
-        'model': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'history': history,
-    }
-
-    path = '{}/ckpt{}.pth'.format(checkpoints_dir, epoch)
-    torch.save(ckpt, path)
-    print('Checkpoint saved to {}'.format(path))
-    sys.stdout.flush()
+            output_image = torch.clamp(output[0], min=0, max=1)
+            output_image = (output_image.cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
+            target_image = (target[0].cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
+            psnr = compute_psnr(output_image, target_image)
+            val_psnr_meter.update(psnr)
 
 
-def setup_optimizer(model, base_lr=1e-3):
-    optimizer = optim.Adam([
-        {'params': model.conv1.parameters()},
-        {'params': model.conv2.parameters()},
-        {'params': [param for param in model.conv3.parameters()], 'lr': base_lr / 10}],
-        lr=base_lr)
+def setup_optimizer(model, config):
+    base_lr = config['training']['optimizer']['lr']
+    if config['training']['optimizer']['name'] == 'sgd':
+        optimizer = optim.SGD([
+            {'params': model.conv1.parameters()},
+            {'params': model.conv2.parameters()},
+            {'params': [param for param in model.conv3.parameters()], 'lr': base_lr / 10}
+        ], lr=base_lr, momentum=config['training']['optimizer']['momentum'])
+    else:
+        optimizer = optim.Adam([
+            {'params': model.conv1.parameters()},
+            {'params': model.conv2.parameters()},
+            {'params': [param for param in model.conv3.parameters()], 'lr': base_lr / 10}
+        ], lr=base_lr)
     return optimizer
 
 
-def adjust_learning_rate(optimizer, lr=None):
-    if lr is None:
-        for i, param_group in enumerate(optimizer.param_groups):
-            param_group['lr'] /= 2
-    else:
-        for i, param_group in enumerate(optimizer.param_groups):
-            if i < 2:
-                param_group['lr'] = lr
-            else:
-                param_group['lr'] = lr / 10
-
-
-def get_max(history):
-    if len(history) == 0:
-        return -1, -1
-    pos = np.argmax(np.array(history))
-    val = history[pos]
-    return pos, val
+def setup_scheduler(optimizer, config):
+    scheduler = StepLR(
+        optimizer, step_size=config['training']['scheduler']['interval'],
+        gamma=config['training']['scheduler']['lr_decay'])
+    return scheduler
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--upscale_factor', type=int, required=True,
-                        help='super resolution upscale factor')
-    parser.add_argument('--batch_size', type=int, default=64,
-                        help='batch size for training')
-    parser.add_argument('--use_new_lr', type=float, default=-1,
-                        help='lr to use, otherwise use from config.py')
-    parser.add_argument('--n_epochs', type=int, default=80,
-                        help='number of epochs to train')
-    parser.add_argument('--checkpoints_dir', type=str, default='checkpoints',
-                        help='directory to save checkpoints')
-    parser.add_argument('--reload_from', type=str, default='',
-                        help='directory to checkpoint to resume training from')
-    parser.add_argument('--start_epoch', type=int, default=1,
-                        help='epoch number to start from')
-    parser.add_argument('--seed', type=int, default=17,
-                        help='random seed')
+    parser.add_argument('--config', type=str, required=True,
+                        help='training config file')
     parser.add_argument('--cuda', action='store_true',
                         help='whether to use cuda')
     args = parser.parse_args()
+
+    # Load config file.
+    with open(args.config, 'r') as f:
+        config = yaml.load(f)
 
     if args.cuda and not torch.cuda.is_available():
         raise Exception('No GPU found')
     device = torch.device('cuda' if args.cuda else 'cpu')
     print('Use device:', device)
 
-    if args.use_new_lr > -1:
-        base_lr = args.use_new_lr
-    else:
-        base_lr = config['base_lr']
+    # Use random seed.
+    seed = np.random.randint(1, 10000)
+    print('Random Seed: ', seed)
+    torch.manual_seed(seed)
+    if args.cuda:
+        torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
 
-    torch.manual_seed(args.seed)
+    # Create folder to log.
+    log_dir = os.path.join(
+        'runs', os.path.basename(args.config)[:-5] + '_' + str(seed))
+    writer = SummaryWriter(log_dir=log_dir)
 
     # Create folder to store checkpoints.
-    os.makedirs(args.checkpoints_dir, exist_ok=True)
+    os.makedirs(
+        os.path.join(config['training']['checkpoint_folder'],
+                     os.path.basename(args.config)[:-5]),
+        exist_ok=True)
 
     print('===> Loading datasets')
     sys.stdout.flush()
-    train_set = get_training_set(args.upscale_factor)
+    train_set = get_training_set(
+        img_dir=config['data']['train_root'],
+        upscale_factor=config['training']['upscale_factor'],
+        img_channels=config['training']['img_channels'],
+        crop_size=config['data']['lr_crop_size'] * config['training']['upscale_factor'])
     train_dataloader = DataLoader(
-        dataset=train_set, batch_size=args.batch_size, shuffle=True,
-        num_workers=config['train_num_workers'])
-    val_set = get_val_set(args.upscale_factor)
+        dataset=train_set, batch_size=config['training']['batch_size'],
+        shuffle=True)
+    val_set = get_val_set(
+        img_dir=config['data']['test_root'],
+        upscale_factor=config['training']['upscale_factor'],
+        img_channels=config['training']['img_channels'])
     val_dataloader = DataLoader(
         dataset=val_set, batch_size=1, shuffle=False)
 
     print('===> Building model')
     sys.stdout.flush()
-    model = ESPCN(upscale_factor=args.upscale_factor).to(device)
+    model = ESPCN(img_channels=config['training']['img_channels'],
+                  upscale_factor=config['training']['upscale_factor']).to(device)
     criterion = nn.MSELoss()
-    optimizer = setup_optimizer(model, base_lr=base_lr)
-    history = {
-        'train_loss': [],
-        'train_psnr': [],
-        'val_psnr': [],
-        'last_epoch_change_lr': 0,
-    }
+    optimizer = setup_optimizer(model, config)
+    scheduler = setup_scheduler(optimizer, config)
 
-    if len(args.reload_from) > 0:
-        print('===> Reloading model from checkpoint {}'.format(
-              args.reload_from))
+    start_iter = 0
+    best_val_psnr = -1
+
+    if config['training']['resume'] != 'None':
+        print('===> Reloading model')
         sys.stdout.flush()
-        ckpt = torch.load(args.reload_from)
+        ckpt = torch.load(config['training']['resume'])
         model.load_state_dict(ckpt['model'])
         optimizer.load_state_dict(ckpt['optimizer'])
-        if args.use_new_lr > -1:
-            adjust_learning_rate(optimizer, args.use_new_lr)
-        history = ckpt['history']
-        if 'last_epoch_change_lr' not in ckpt['history'].keys():
-            history['last_epoch_change_lr'] = 0
+        scheduler.load_state_dict(ckpt['scheduler'])
+        start_iter = ckpt['iter']
+        best_val_psnr = ckpt['best_val_psnr']
 
     print('===> Start training')
-    for epoch in range(args.start_epoch, args.start_epoch + args.n_epochs):
-        train_loss, train_psnr = train(
-            epoch, train_dataloader, device, model, optimizer, criterion)
-        val_psnr = test(val_dataloader, model, criterion)
+    sys.stdout.flush()
 
-        pos, max_val_psnr = get_max(history['val_psnr'])
-        if val_psnr <= max_val_psnr and epoch - pos > 200:
-            # If we have waited for more than 200 epochs but still got no
-            # improvement, then stop.
-            break
+    still_training = True
+    i = start_iter
+    val_loss_meter = AverageMeter()
+    val_psnr_meter = AverageMeter()
 
-        history['train_loss'].append(train_loss)
-        history['train_psnr'].append(train_psnr)
-        history['val_psnr'].append(val_psnr)
-        checkpoint(args.checkpoints_dir, epoch, model, optimizer, history)
+    while i <= config['training']['iterations'] and still_training:
+        for batch in train_dataloader:
+            i += 1
+            scheduler.step()
+            model.train()
 
-        # Check to see if we should divide the lr by 2.
-        if epoch >= 200 and epoch - history['last_epoch_change_lr'] >= 100:
-            recent_loss = history['train_loss'][epoch-100:epoch]
-            ancient_loss = history['train_loss'][:epoch-100]
-            a = min(recent_loss)
-            b = min(ancient_loss)
-            ratio = (a - b) / b
-            if ratio > 0 or abs(ratio) < 0.002:
-                print('\n===> Divide lr by 2, current base lr: ', end='')
-                adjust_learning_rate(optimizer)
-                base_lr = optimizer.param_groups[0]['lr']
-                print(base_lr)
-                print('\n')
+            input, target = batch[0].to(device), batch[1].to(device)
 
-                history['last_epoch_change_lr'] = epoch
+            output = model(input)
+            optimizer.zero_grad()
+            
+            loss = criterion(output, target)
 
-                if base_lr < 1e-5:
-                    print('===> lr is less than 1e-5, exit!')
-                    break
+            loss.backward()
+            optimizer.step()
+
+            if i % config['training']['print_interval'] == 0:
+                format_str = 'Iter [{:d}/{:d}] Loss: {:.6f}'
+                print_str = format_str.format(
+                    i,
+                    config['training']['iterations'],
+                    loss.item()
+                )
+                print(print_str)
+                sys.stdout.flush()
+                writer.add_scalar('loss/train_loss', loss.item(), i)
+
+            if i % config['training']['val_interval'] == 0:
+                validate(i, val_dataloader, model, criterion, val_loss_meter, 
+                         val_psnr_meter, writer, config)
+
+                writer.add_scalar('loss/val_loss', val_loss_meter.avg, i)
+                writer.add_scalar('psnr/val_psnr', val_psnr_meter.avg, i)
+
+                format_str = '===> Iter [{:d}/{:d}] Val_Loss: {:.6f}, Val_PSNR: {:.4f}'
+                print(format_str.format(
+                    i, config['training']['iterations'],
+                    val_loss_meter.avg,
+                    val_psnr_meter.avg
+                ))
+                sys.stdout.flush()
+
+                if val_psnr_meter.avg >= best_val_psnr:
+                    best_val_psnr = val_psnr_meter.avg
+                    ckpt = {
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'scheduler': scheduler.state_dict(),
+                        'best_val_psnr': best_val_psnr,
+                        'iter': i
+                    }
+                    path = '{}/{}/{}_{}.pth'.format(
+                        config['training']['checkpoint_folder'],
+                        os.path.basename(args.config)[:-5],
+                        os.path.basename(args.config)[:-5], i)
+                    torch.save(ckpt, path)
+
+                val_loss_meter.reset()
+                val_psnr_meter.reset()
+
+            if i >= config['training']['iterations']:
+                still_training = False
+                break

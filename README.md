@@ -17,6 +17,6 @@ Performance of my implementations (versus results reported by authors which are 
 
 | Algorithm | Scale | Set5 | Set14 | BSD100 |
 | --------- |:-----:|:----:|:-----:|:------:|
-| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.47 (36.66)<br>x<br>37.04 (37.00) | 32.19 (32.45)<br>x<br>32.57 (32.63) | 31.21<br>x<br>31.53 |
-| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.54 (32.75)<br>x<br>33.15 (33.16) | 29.06 (29.30)<br>x<br>29.39 (29.43) | 28.28<br>x<br>28.52 (28.60) |
-| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.27 (30.49)<br>x<br>30.86 | 27.29 (27.50)<br>x<br>27.66 | 26.78<br>x<br>27.02 |
+| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.47 (36.66)<br>37.07<br>37.04 (37.00) | 32.19 (32.45)<br>32.60<br>32.57 (32.63) | 31.21<br>31.55<br>31.53 |
+| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.54 (32.75)<br>33.10 (33.13)<br>33.15 (33.16) | 29.06 (29.30)<br>29.40 (29.49)<br>29.39 (29.43) | 28.28<br>28.54<br>28.52 (28.60) |
+| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.27 (30.49)<br>30.72 (30.90)<br>30.86 | 27.29 (27.50)<br>27.59 (27.73)<br>27.66 | 26.78<br>27.00<br>27.02 |

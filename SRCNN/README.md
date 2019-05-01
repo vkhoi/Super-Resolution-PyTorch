@@ -62,12 +62,12 @@ $ python super_resolve.py --model trained_models/srcnn_Y_scale2_t91_general100_a
 ```
 
 ## Experimental results
-Training scripts for these models are located in _configs/_ folder.
+Train scripts for these models are located in _configs/_ folder. This is PSNR performance (versus results reported by authors in parentheses).
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
-| Set5    | 36.47               | 32.54               | 30.27               |
-| Set14   | 32.19               | 29.06               | 27.29               |
+| Set5    | 36.47 (36.66)       | 32.54 (32.75)       | 30.27 (30.49)       |
+| Set14   | 32.19 (32.45)       | 29.06 (29.30)       | 27.29 (27.50)       |
 | BSD100  | 31.21               | 28.28               | 26.78               |
 
 The trained models that achieve these results are put in folder *trained_models*.

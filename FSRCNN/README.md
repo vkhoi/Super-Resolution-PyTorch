@@ -4,7 +4,7 @@ Implementation of FSRCNN as described in ["Accelerating the Super-Resolution Con
 An hourglass-shaped CNN structure for fast image super-resolution.
 
 ## Data preparation
-The network is trained on the *T91* and *General100* dataset and validated on the *Set5*, *Set14*, *BSD200* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
+The network is trained on the *T91* and *General100* dataset and validated on the *Set5*, *Set14*, *BSD100* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
 
 ## Train configurations
 Train configurations can be modified in the _configs/*.yaml_ files. Training logs are outputted as _tensorboard_ to the _runs/_ folder.
@@ -68,8 +68,8 @@ Training scripts for these models are located in _configs/_ folder.
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
-| Set5    | 37.04               | 33.15               | 30.86               |
-| Set14   | 32.57               | 29.39               | 27.66               |
+| Set5    | 37.04 (37.00)       | 33.15 (33.16)       | 30.86 (30.71)       |
+| Set14   | 32.57 (32.63)       | 29.39 (29.43)       | 27.66 (27.59)       |
 | BSD100  | 31.53               | 28.52               | 27.02               |
 
 The trained models that achieve these results are put in folder *trained_models*.
