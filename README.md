@@ -11,12 +11,12 @@ The following models have been implemented:
 
 ## Performance
 
-Performance of my implementations.
+Performance of my implementations (versus results reported by authors which are put in parentheses).
 
 **PSNR**
 
 | Algorithm | Scale | Set5 | Set14 | BSD100 |
 | --------- |:-----:|:----:|:-----:|:------:|
-| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.47<br>x<br>37.04 | 32.19<br>x<br>32.57 | 31.21<br>x<br>31.53 |
-| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.54<br>x<br>33.15 | 29.06<br>x<br>29.39 | 28.28<br>x<br>28.52 |
-| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.27<br>x<br>30.86 | 27.29<br>x<br>27.66 | 26.78<br>x<br>27.02 |
+| SRCNN<br>ESPCN<br>FSRCNN | 2x | 36.47 (36.66)<br>x<br>37.04 (37.00) | 32.19 (32.45)<br>x<br>32.57 (32.63) | 31.21<br>x<br>31.53 |
+| SRCNN<br>ESPCN<br>FSRCNN | 3x | 32.54 (32.75)<br>x<br>33.15 (33.16) | 29.06 (29.30)<br>x<br>29.39 (29.43) | 28.28<br>x<br>28.52 (28.60) |
+| SRCNN<br>ESPCN<br>FSRCNN | 4x | 30.27 (30.49)<br>x<br>30.86 | 27.29 (27.50)<br>x<br>27.66 | 26.78<br>x<br>27.02 |
