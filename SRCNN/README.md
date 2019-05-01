@@ -66,9 +66,9 @@ Training scripts for these models are located in _configs/_ folder.
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
-| Set5    | 36.46               | 32.42               | 30.14               |
-| Set14   | 32.18               | 28.95               | 27.17               |
-| BSD100  | 31.21               |                |                |
+| Set5    | 36.47               | 32.54               | 30.27               |
+| Set14   | 32.19               | 29.06               | 27.29               |
+| BSD100  | 31.21               | 28.28               | 26.78               |
 
 The trained models that achieve these results are put in folder *trained_models*.
 
