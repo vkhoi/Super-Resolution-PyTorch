@@ -4,7 +4,7 @@ Implementation of SRCNN as described in ["Image Super-Resolution Using Deep Conv
 SRCNN is one of the first works that uses deep neural network to perform image super-resolution. SRCNN is a pre-upsampling model, which means it first upsamples the low-resolution input image (for example, using bicubic interpolation) before forwarding it through the network to obtain high-resolution result. SRCNN's network architecture is very small with only around 8k parameters, yet it still outperforms bicubic upsampling.
 
 ## Data preparation
-The network is trained on the *T91* and *General100* dataset and validated on the *Set5*, *Set14*, *BSD200* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
+The network is trained on the *T91* and *General100* dataset and validated on the *Set14* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
 
 ## Training
 Train configurations can be modified in the _configs/*.yaml_ files. Training logs are outputted as _tensorboard_ to the _runs/_ folder.
@@ -70,7 +70,7 @@ Train scripts for these models are located in _configs/_ folder. This is PSNR pe
 | Set14   | 32.19 (32.45)       | 29.06 (29.30)       | 27.29 (27.50)       |
 | BSD100  | 31.21               | 28.28               | 26.78               |
 
-The trained models that achieve these results are put in folder *trained_models*.
+The model checkpoints that achieve these results are put in folder *trained_models*. Refer to *inference_save_to_mat.py* to see how to load weights from these checkpoints.
 
 ## References
 * ["Image Super-Resolution Using Deep Convolutional Networks" - Dong et al.](https://arxiv.org/pdf/1501.00092.pdf)

@@ -104,15 +104,15 @@ if __name__ == '__main__':
     sys.stdout.flush()
     train_set = get_training_set(
         img_dir=config['data']['train_root'],
-        upscale_factor=config['training']['upscale_factor'],
-        crop_size=config['data']['lr_crop_size'] * config['training']['upscale_factor'])
+        upscale_factor=config['model']['upscale_factor'],
+        crop_size=config['data']['lr_crop_size'] * config['model']['upscale_factor'])
     train_dataloader = DataLoader(
         dataset=train_set, batch_size=config['training']['batch_size'],
         shuffle=True)
 
     val_set = get_val_set(
         img_dir=config['data']['test_root'],
-        upscale_factor=config['training']['upscale_factor'])
+        upscale_factor=config['model']['upscale_factor'])
     val_dataloader = DataLoader(
         dataset=val_set, batch_size=1, shuffle=False)
 

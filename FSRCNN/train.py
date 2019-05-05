@@ -104,24 +104,24 @@ if __name__ == '__main__':
     sys.stdout.flush()
     train_set = get_training_set(
         img_dir=config['data']['train_root'],
-        upscale_factor=config['training']['upscale_factor'],
-        img_channels=config['training']['img_channels'],
-        crop_size=config['data']['lr_crop_size'] * config['training']['upscale_factor'])
+        upscale_factor=config['model']['upscale_factor'],
+        img_channels=config['model']['img_channels'],
+        crop_size=config['data']['lr_crop_size'] * config['model']['upscale_factor'])
     train_dataloader = DataLoader(
         dataset=train_set, batch_size=config['training']['batch_size'],
         shuffle=True)
 
     val_set = get_val_set(
         img_dir=config['data']['test_root'],
-        upscale_factor=config['training']['upscale_factor'],
-        img_channels=config['training']['img_channels'])
+        upscale_factor=config['model']['upscale_factor'],
+        img_channels=config['model']['img_channels'])
     val_dataloader = DataLoader(
         dataset=val_set, batch_size=1, shuffle=False)
 
     print('===> Building model')
     sys.stdout.flush()
-    model = FSRCNN(img_channels=config['training']['img_channels'],
-                   upscale_factor=config['training']['upscale_factor']).to(device)
+    model = FSRCNN(img_channels=config['model']['img_channels'],
+                   upscale_factor=config['model']['upscale_factor']).to(device)
     criterion = nn.MSELoss()
     optimizer = setup_optimizer(model, config)
     scheduler = setup_scheduler(optimizer, config)
@@ -196,7 +196,8 @@ if __name__ == '__main__':
                         'optimizer': optimizer.state_dict(),
                         'scheduler': scheduler.state_dict(),
                         'best_val_psnr': best_val_psnr,
-                        'iter': i
+                        'iter': i,
+                        'config': config
                     }
                     path = '{}/{}/{}_{}.pth'.format(
                         config['training']['checkpoint_folder'],

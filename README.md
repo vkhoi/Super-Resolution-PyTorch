@@ -11,7 +11,7 @@ The following models have been implemented:
 
 ## Performance
 
-Performance of my implementations (versus results reported by authors which are put in parentheses).
+Performance of my implementations (versus results reported by authors put in parentheses).
 
 **PSNR**
 

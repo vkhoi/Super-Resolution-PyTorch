@@ -2,9 +2,10 @@ data:
   train_root: '../../datasets/super-resolution/T91_General100'
   test_root: '../../datasets/super-resolution/Set14'
   lr_crop_size: 32
-training:
+model:
   upscale_factor: 3
-  img_channels: 1 # 1 for Y, 3 for RGB
+  img_channels: 1 # 1 for Y, 3 for RGB  
+training:
   iterations: 1000000 # total number of iterations to train
   batch_size: 64
   val_interval: 1000 # run validation after this # of iterations

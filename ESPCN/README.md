@@ -4,7 +4,7 @@ Implementation of ESPCN as described in ["Real-Time Single Image and Video Super
 Pre-upsampling super-resolution (SR) methods (e.g. SRCNN) upsamples the input image and performs reconstruction in the high-resolution (HR) space. The authors of ESPCN shows that this approach is computationally expensive (since all mappings are done in HR space) and it doesn't add any necessary information to construct the HR output. On the other hand, ESPCN extracts features in low-resolution (LR) space, then uses an efficient sub-pixel convolution layer that learns to upsample the LR feature maps into HR image.
 
 ## Data preparation
-The network is trained on the *T91* and *General100* dataset and validated on the *Set5*, *Set14*, *BSD100* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
+The network is trained on the *T91* and *General100* dataset and validated on the *Set14* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
 
 ## Train configurations
 Train configurations can be modified in the _configs/*.yaml_ files. Training logs are outputted as _tensorboard_ to the _runs/_ folder.
@@ -48,7 +48,7 @@ Then, go to folder *../matlab_eval* and modify *eval_psnr.m* so that it has the 
 ### Super-resolve an image
 ```
 usage: super_resolve.py [-h] --model MODEL --upscale_factor UPSCALE_FACTOR
-                        --input INPUT --output OUTPUT
+                        --img_channels IMG_CHANNELS --input INPUT --output OUTPUT
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -64,6 +64,7 @@ $ python super_resolve.py --model trained_models/espcn_Y_scale2_t91_general100_a
 ```
 
 ## Experimental results
+Train scripts for these models are located in _configs/_ folder. This is PSNR performance (versus results reported by authors in parentheses).
 
 | DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
@@ -71,7 +72,7 @@ $ python super_resolve.py --model trained_models/espcn_Y_scale2_t91_general100_a
 | Set14   | 32.60               | 29.40 (29.49)       | 27.59 (27.73)       |
 | BSD100  | 31.55               | 28.54               | 27.00               |
 
-The trained models that achieve these results are put in folder *trained_model*.
+The model checkpoints that achieve these results are put in folder *trained_models*. Refer to *inference_save_to_mat.py* to see how to load weights from these checkpoints.
 
 ## References
 * ["Real-Time Single Image and Video Super-Resolution Using an Efficient Sub-Pixel Convolutional Neural Network" - Shi et al.](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Shi_Real-Time_Single_Image_CVPR_2016_paper.pdf)
