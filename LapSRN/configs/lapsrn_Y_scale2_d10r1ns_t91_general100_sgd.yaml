@@ -1,0 +1,25 @@
+data:
+  train_root: '../../datasets/super-resolution/T91_General100'
+  test_root: '../../datasets/super-resolution/Set14'
+  hr_crop_size: 128
+model:
+  upscale_factor: 2
+  img_channels: 1 # 1 for Y, 3 for RGB
+  n_feat: 10 # number of convolution in a recursive block
+  n_recursive: 1 # number of recursive blocks in feature embedding module
+  local_residual: 'ns' # 'ns' (no skip) or 'ds' (distinct source) or 'ss' (shared source)
+training:
+  iterations: 1000000 # total number of iterations to train
+  batch_size: 64
+  val_interval: 1000 # run validation after this # of iterations
+  print_interval: 500 # print training log every # of iterations
+  checkpoint_folder: 'checkpoints'
+  optimizer:
+    name: sgd # 'sgd' or 'adam'
+    lr: 1.0e-4
+    momentum: 0.9
+    weight_decay: 0
+  scheduler:
+    lr_decay: 0.5
+    interval: 100000 # decay lr every # of iteraitons
+  resume: 'None' # path to checkpoint to resume from
