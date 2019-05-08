@@ -1,8 +1,6 @@
 # LapSRN - Fast and Accurate Image Super-Resolution with Deep Laplacian Pyramid Networks
 Implementation of LapSRN as described in ["Deep Laplacian Pyramid Networks for Fast and Accurate Super-Resolution" - Lai et al.](https://arxiv.org/pdf/1710.01992.pdf).
 
-Currently, the repo contains only experimental results of x2 scale.
-
 ## Data preparation
 The network is trained on the *T91* and *General100* dataset and validated on the *Set14* dataset. These datasets can be downloaded from [here](http://vllab.ucmerced.edu/wlai24/LapSRN).
 
@@ -66,11 +64,11 @@ $ python super_resolve.py --model trained_models/lapsrn_Y_scale2_d10r1ns_t91_gen
 ## Experimental results
 Train scripts for these models are located in _configs/_ folder. This is PSNR performance (versus results reported by authors in parentheses).
 
-| DataSet | x2 upscaling (PSNR) | x3 upscaling (PSNR) | x4 upscaling (PSNR) |
+| DataSet | x2 upscaling (PSNR) | x4 upscaling (PSNR) | x8 upscaling (PSNR) |
 | ------- |:-------------------:|:-------------------:|:-------------------:|
-| Set5    | 37.44               | x       | x       |
-| Set14   | 32.90               | x       | x       |
-| BSD100  | 31.78               | x       | x       |
+| Set5    | 37.48 (37.52)       | 31.47 (31.54)       | 25.92 (26.14)       |
+| Set14   | 32.91 (33.08)       | 28.02 (28.19)       | 24.31 (24.44)       |
+| BSD100  | 31.79 (31.80)       | 27.25 (27.32)       | 24.46 (24.54)       |
 
 The model checkpoints that achieve these results are put in folder *trained_models*. Refer to *inference_save_to_mat.py* to see how to load weights from these checkpoints.
 

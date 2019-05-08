@@ -25,7 +25,7 @@ class _RecursiveBlock(nn.Sequential):
         super(_RecursiveBlock, self).__init__()
         for d in range(n_feat):
             self.add_module('leaky_relu%d' % d,
-                            nn.LeakyReLU(0.2, inplace=True))
+                            nn.LeakyReLU(0.2))
             self.add_module('conv%d' % d,
                             nn.Conv2d(64, 64, kernel_size=3, padding=1))
 
@@ -48,9 +48,9 @@ class _FeatureEmbedding(nn.Module):
         self.local_residual = local_residual
 
         self.recursive_block = _RecursiveBlock(n_feat)
-        self.leaky_relu = nn.LeakyReLU(0.2, inplace=True)
+        self.leaky_relu = nn.LeakyReLU(0.2)
         self.upsample = nn.ConvTranspose2d(
-            64, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
+            64, 64, kernel_size=4, stride=2, padding=1, bias=False)
 
     def forward(self, x):
         if self.local_residual == 'ns':
@@ -94,7 +94,10 @@ class LapSRN(nn.Module):
                 nn.ConvTranspose2d(img_channels, img_channels, kernel_size=4, 
                                    stride=2, padding=1, bias=False))
             self.embeddings.append(_FeatureEmbedding(n_feat, n_recursive, local_residual))
-            self.residuals.append(nn.Conv2d(64, img_channels, kernel_size=3, padding=1))
+            self.residuals.append(nn.Sequential(
+                nn.LeakyReLU(0.2),
+                nn.Conv2d(64, img_channels, kernel_size=3, padding=1),
+            ))
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -115,11 +118,12 @@ class LapSRN(nn.Module):
         # Result at each level.
         res = []
 
-        identity = x
         for i in range(self.n_levels):
-            identity = self.upsamplings[i](identity)
+            x = self.upsamplings[i](x)
             features = self.embeddings[i](features)
             residual = self.residuals[i](features)
-            res.append(identity + residual)
 
-        return res[-1]
+            x = x + residual
+            res.append(x)
+
+        return res

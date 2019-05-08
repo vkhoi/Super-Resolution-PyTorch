@@ -43,7 +43,7 @@ if __name__ == '__main__':
     image_filenames = sorted(image_filenames)
 
     model = LapSRN(img_channels=1,
-                   upscale_factor=2,
+                   upscale_factor=args.upscale_factor,
                    n_feat=10,
                    n_recursive=1,
                    local_residual='ns').to(device)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         # Achieve high-res using FSRCNN.
         y = lr_img.copy()
         y = ToTensor()(y).view(1, -1, y.size[1], y.size[0])
-        out_img_deep_y = model(y)[0].detach().numpy().squeeze()
+        out_img_deep_y = model(y)[-1].detach().numpy().squeeze()
         out_img_deep_y = out_img_deep_y.clip(0, 1)
 
         if args.img_channels == 3:

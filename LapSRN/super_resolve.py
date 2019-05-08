@@ -35,10 +35,11 @@ if __name__ == '__main__':
 
     input = ToTensor()(img).view(1, -1, img.size[1], img.size[0])
 
-    out = model(input)
-    out_img = out.detach().numpy().squeeze()
+    out = model(input)[-1]
+    out_img = out.detach().numpy().squeeze().transpose(1, 2, 0)
     out_img *= 255.0
     out_img = out_img.clip(0, 255)
+    print(out_img.shape)
     if args.img_channels == 1:
         out_img = Image.fromarray(np.uint8(out_img), mode='L')
         out_img_cb = cb.resize(out_img.size, Image.BICUBIC)

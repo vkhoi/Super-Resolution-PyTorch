@@ -18,6 +18,9 @@ def is_image_file(filename):
 class SuperResDataset(Dataset):
     def __init__(self, image_dir, upscale_factor, img_channels, crop_size=-1,
                  augmentations=None, resampling=64):
+        """
+        - crop_size = -1 only when testing.
+        """
         super(SuperResDataset, self).__init__()
 
         # Get image filenames.
@@ -61,19 +64,22 @@ class SuperResDataset(Dataset):
             height = height - (height % self.upscale_factor)
             input = CenterCrop((height, width))(input)
 
-        # Make a high-resolution copy.
-        target = input.copy()
+        # LapSRN employs deep supervision, so there will be multiple targets
+        # (one target at each level).
+        targets = [input.copy()]
+        input = input.resize((input.size[0]//2, input.size[1]//2), Image.BICUBIC)
 
-        # Downsample to create image at low-res.
-        # We already make sure that crop_size divides upscale_factor.
-        input = input.resize(
-            (input.size[0]//self.upscale_factor, input.size[1]//self.upscale_factor), 
-            Image.BICUBIC)
+        n_levels = int(np.log2(self.upscale_factor))
+        for i in range(n_levels - 1):
+            targets = [input] + targets
+            input = input.resize(
+                (input.size[0]//2, input.size[1]//2), Image.BICUBIC)
 
         input = ToTensor()(input)
-        target = ToTensor()(target)
+        for i in range(n_levels):
+            targets[i] = ToTensor()(targets[i])
 
-        return input, target
+        return input, targets
 
     def __len__(self):
         return self.len * self.resampling

@@ -25,25 +25,30 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-def validate(i, val_dataloader, model, criterion, val_loss_meter,
-             val_psnr_meter, writer, config):
+def validate(i, val_dataloader, model, criterion, val_loss_meters,
+             val_psnr_meters, writer, config):
     """Assume batch size when doing validation is 1. 
     """
     model.eval()
 
     with torch.no_grad():
         for j, batch in enumerate(val_dataloader):
-            input, target = batch[0].to(device), batch[1].to(device)
+            input, targets = batch[0].to(device), batch[1]
+            for _ in range(len(targets)):
+                targets[_] = targets[_].to(device)
 
-            output = model(input)
-            loss = criterion(output, target)
-            val_loss_meter.update(loss)
+            outputs = model(input)
 
-            output_image = torch.clamp(output[0], min=0, max=1)
-            output_image = (output_image.cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
-            target_image = (target[0].cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
-            psnr = compute_psnr(output_image, target_image)
-            val_psnr_meter.update(psnr)
+            # Record loss at each level.
+            for _ in range(len(targets)):
+                loss = criterion(outputs[_], targets[_])
+                val_loss_meters[_].update(loss)
+
+                output_image = torch.clamp(outputs[_][0], min=0, max=1)
+                output_image = (output_image.cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
+                target_image = (targets[_][0].cpu().numpy() * 255).transpose(1, 2, 0).astype(np.uint8)
+                psnr = compute_psnr(output_image, target_image)
+                val_psnr_meters[_].update(psnr)
 
 
 def setup_optimizer(model, config):
@@ -151,8 +156,12 @@ if __name__ == '__main__':
 
     still_training = True
     i = start_iter
-    val_loss_meter = AverageMeter()
-    val_psnr_meter = AverageMeter()
+    n_levels = int(np.log2(config['model']['upscale_factor']))
+    val_loss_meters = []
+    val_psnr_meters = []
+    for _ in range(n_levels):
+        val_loss_meters.append(AverageMeter())
+        val_psnr_meters.append(AverageMeter())
 
     while i <= config['training']['iterations'] and still_training:
         for batch in train_dataloader:
@@ -160,44 +169,51 @@ if __name__ == '__main__':
             scheduler.step()
             model.train()
 
-            input, target = batch[0].to(device), batch[1].to(device)
+            input, targets = batch[0].to(device), batch[1]
+            for _ in range(n_levels):
+                targets[_] = targets[_].to(device)
 
-            output = model(input)
+            outputs = model(input)
             optimizer.zero_grad()
 
-            loss = criterion(output, target)
+            # Record loss at each level for plotting to TensorBoard.
+            losses = [criterion(outputs[0], targets[0])]
+            for _ in range(1, len(targets)):
+                losses.append(criterion(outputs[_], targets[_]))
+
+            # Accumulate.
+            loss = losses[0]
+            for _ in range(1, n_levels):
+                loss = loss + losses[_]
 
             loss.backward()
             optimizer.step()
 
             if i % config['training']['print_interval'] == 0:
-                format_str = 'Iter [{:d}/{:d}] Loss: {:.6f}'
-                print_str = format_str.format(
-                    i,
-                    config['training']['iterations'],
-                    loss.item()
-                )
-                print(print_str)
+                print('Iter [{:d}/{:d}]'.format(i, config['training']['iterations']), end='')
+                for _ in range(n_levels):
+                    level = 2**(_ + 1)
+                    print(' Loss_{:d}x: {:.6f}'.format(level, losses[_].item()), end='')
+                    writer.add_scalar('loss/train_loss_{:d}x'.format(level), losses[_].item(), i)
+                print('')
                 sys.stdout.flush()
-                writer.add_scalar('loss/train_loss', loss.item(), i)
 
             if i % config['training']['val_interval'] == 0:
-                validate(i, val_dataloader, model, criterion, val_loss_meter, 
-                         val_psnr_meter, writer, config)
+                validate(i, val_dataloader, model, criterion, val_loss_meters, 
+                         val_psnr_meters, writer, config)
 
-                writer.add_scalar('loss/val_loss', val_loss_meter.avg, i)
-                writer.add_scalar('psnr/val_psnr', val_psnr_meter.avg, i)
-
-                format_str = '===> Iter [{:d}/{:d}] Val_Loss: {:.6f}, Val_PSNR: {:.4f}'
-                print(format_str.format(
-                    i, config['training']['iterations'],
-                    val_loss_meter.avg,
-                    val_psnr_meter.avg
-                ))
+                print('Iter [{:d}/{:d}]'.format(i, config['training']['iterations']), end='')
+                for _ in range(n_levels):
+                    level = 2**(_ + 1)
+                    print(' Loss_{:d}x: {:.6f}'.format(level, val_loss_meters[_].avg), end='')
+                    print(' PSNR_{:d}x: {:.6f}'.format(level, val_psnr_meters[_].avg), end='')
+                    writer.add_scalar('loss/val_loss_{:d}x'.format(level), val_loss_meters[_].avg, i)
+                    writer.add_scalar('psnr/val_psnr_{:d}x'.format(level), val_psnr_meters[_].avg, i)
+                print('')
                 sys.stdout.flush()
 
-                if val_psnr_meter.avg >= best_val_psnr:
-                    best_val_psnr = val_psnr_meter.avg
+                if val_psnr_meters[-1].avg >= best_val_psnr:
+                    best_val_psnr = val_psnr_meters[-1].avg
                     ckpt = {
                         'model': model.state_dict(),
                         'optimizer': optimizer.state_dict(),
@@ -211,8 +227,9 @@ if __name__ == '__main__':
                         os.path.basename(args.config)[:-5], i)
                     torch.save(ckpt, path)
 
-                val_loss_meter.reset()
-                val_psnr_meter.reset()
+                for _ in range(n_levels):
+                    val_loss_meters[_].reset()
+                    val_psnr_meters[_].reset()
 
             if i >= config['training']['iterations']:
                 still_training = False
